@@ -333,11 +333,11 @@ canvas.rc{width:100%;height:140px;display:block;background:#04080f;margin-top:8p
 </style>
 
 <!-- ═══════════════════════════ VIZ PANEL ═══════════════════════════ -->
-<div id="vizPanel" style="border-bottom:1px solid var(--bord);background:var(--bg);">
+<div id="vizPanel" style="border-bottom:1px solid var(--bord);background:var(--bg);position:relative;z-index:600;">
 
   <!-- TAB BAR -->
   <div style="display:flex;align-items:center;background:rgba(6,12,20,.96);
-    border-bottom:1px solid var(--bord);flex-wrap:wrap;">
+    border-bottom:1px solid var(--bord);flex-wrap:wrap;position:relative;z-index:600;">
     <button class="vtab active" id="vtab-spc"     onclick="showViz('spc')">🌪 SPC OUTLOOKS</button>
     <button class="vtab"        id="vtab-radar"   onclick="showViz('radar')">🛰 NWS RADAR</button>
     <button class="vtab"        id="vtab-map"     onclick="showViz('map')">🗺 REGION MAP</button>
@@ -2046,7 +2046,7 @@ function syncParamsToDay(d){
     const hr=parseInt(t.slice(11,13));
     const diff=Math.abs(hr-18);
     if(diff<noonDiff){noonDiff=diff;noonIdx=i;}
-    const cape=(DATA.hourly.cape&&DATA.hourly.cape[i])||0;
+    const cape=(DATA.hourly.cape_surface&&DATA.hourly.cape_surface[i])||(DATA.hourly.cape&&DATA.hourly.cape[i])||0;
     if(cape>bestCAPE){bestCAPE=cape;bestIdx=i;}
   });
   const useIdx=bestIdx>=0?bestIdx:noonIdx>=0?noonIdx:-1;
@@ -2193,14 +2193,14 @@ updateLegend();
 setTimeout(initSPC, 300);
 startSPCTimer();
 // maps initialized on first tab click</script>
-<div id="vp-radar" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:500;overflow:auto;padding:16px 22px;box-sizing:border-box;">
+<div id="vp-radar" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:400;overflow:auto;padding:16px 22px;box-sizing:border-box;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap;">
         <div class="sec" style="border:none;margin:0;padding:0;"><span class="a">//</span> NWS NEXRAD RADAR — Live Leaflet Map</div>
         <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;">
           <button class="rdr-btn active" id="rb-n0q" onclick="setRadarType('n0q')">Base Refl.</button>
-          <button class="rdr-btn"        id="rb-n0r" onclick="setRadarType('n0r')">Composite Refl.</button>
+          <button class="rdr-btn"        id="rb-eet" onclick="setRadarType('eet')">Echo Tops</button>
           <button class="rdr-btn"        id="rb-n0u"  onclick="setRadarType('n0u')">Velocity</button>
-          <button class="rdr-btn"        id="rb-dsp" onclick="setRadarType('dsp')">1-hr Precip</button>
+          <button class="rdr-btn"        id="rb-daa" onclick="setRadarType('daa')">1-hr Precip</button>
         </div>
       </div>
       <div style="border:1px solid var(--bord2);">
@@ -2213,7 +2213,7 @@ startSPCTimer();
           font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.62rem;">↗ NWS RADAR.WEATHER.GOV</a>
       </div>
     </div>
-<div id="vp-map" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:500;overflow:auto;padding:16px 22px;box-sizing:border-box;">
+<div id="vp-map" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:400;overflow:auto;padding:16px 22px;box-sizing:border-box;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap;">
         <div class="sec" style="border:none;margin:0;padding:0;"><span class="a">//</span> US REGION MAP — click a region to load data</div>
         <div id="mapSelLbl" style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;
