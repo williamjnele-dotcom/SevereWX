@@ -2786,7 +2786,9 @@ async function loadAlerts(){
   alertsLayers = [];
 
   // IEM VTEC GeoJSON - has geometry for ALL alert types including zone-based
-  const url = 'https://mesonet.agron.iastate.edu/geojson/vtec_current.geojson';
+  // IEM watchwarn CGI - returns all currently active NWS WWAs with geometry
+  // timeopt=1 = currently valid, accept=geojson for GeoJSON output
+  const url = 'https://mesonet.agron.iastate.edu/cgi-bin/request/gis/watchwarn.py?accept=geojson&timeopt=1';
   
   const PHEN = {"TO": "Tornado", "SV": "Severe Thunderstorm", "FF": "Flash Flood", "FA": "Areal Flood", "FL": "Flood", "MA": "Marine", "FW": "Red Flag", "WS": "Winter Storm", "BZ": "Blizzard", "IS": "Ice Storm", "ZR": "Freezing Rain", "WC": "Wind Chill", "HZ": "Hard Freeze", "FZ": "Freeze", "FR": "Frost", "HT": "Heat", "EH": "Excessive Heat", "AF": "Ashfall", "DS": "Dust Storm", "DU": "Blowing Dust", "SM": "Dense Smoke", "FG": "Dense Fog", "CF": "Coastal Flood", "LS": "Lakeshore Flood", "HF": "Hurricane Force Wind", "HU": "Hurricane", "TR": "Tropical Storm", "TY": "Typhoon", "SS": "Storm Surge", "TS": "Tsunami", "SQ": "Snow Squall", "LO": "Low Water", "RP": "Rip Current", "VO": "Volcano", "ZF": "Freezing Fog", "AS": "Air Stagnation", "MF": "Marine Dense Fog", "SC": "Small Craft", "SW": "Small Craft for Hazardous Seas", "SI": "Small Craft for Winds", "BW": "Brisk Wind", "LW": "Lake Wind", "EW": "Extreme Wind", "UP": "Ice Accretion", "HW": "High Wind", "WI": "Wind", "LE": "Lake Effect Snow", "HP": "Heavy Sleet", "HS": "Heavy Snow", "BS": "Blowing Snow", "SB": "Snow and Blowing Snow", "WW": "Winter Weather", "IP": "Sleet", "ZL": "Freezing Drizzle", "WA": "Winter Storm Watch", "CW": "Cold Weather", "EC": "Extreme Cold", "XH": "Extreme Heat"};
   const SIG  = {"W": "Warning", "A": "Advisory", "Y": "Advisory", "S": "Statement", "O": "Outlook", "F": "Forecast", "N": "Synopsis", "E": "Emergency"};
@@ -2813,26 +2815,31 @@ async function loadAlerts(){
 
     features.forEach(feat=>{
       const p = feat.properties || {};
-      const ev = buildEventName(p.phenomena, p.significance);
-      const col = alertColor(ev);
+      // watchwarn.py uses PHENOM/SIG fields; also handle NWS API event field
+      const phen = p.PHENOM || p.phenomena || '';
+      const sig  = p.SIG    || p.significance || '';
+      const ev   = p.event  || buildEventName(phen, sig);
+      const col  = alertColor(ev);
 
-      // Build NWS-compatible props for formatAlertDetail
-      const issued  = p.utc_issue  ? new Date(p.utc_issue+'Z')  : null;
-      const expires = p.utc_expire ? new Date(p.utc_expire+'Z') : null;
+      const issued  = p.ISSUED  || p.utc_issue  || p.sent || '';
+      const expires = p.EXPIRED || p.utc_expire || p.expires || '';
+      const wfo     = p.WFO     || p.wfo || '';
+      const ugc     = p.NWS_UGC || p.ugc_name || p.areaDesc || '';
+
       const displayProps = {
         event:       ev,
-        headline:    ev + ' issued by NWS ' + (p.wfo||''),
-        areaDesc:    p.ugc_name || p.counties || p.ugc || '',
-        severity:    (p.significance==='W'||p.significance==='E') ? 'Severe' :
-                     (p.significance==='A'||p.significance==='Y') ? 'Moderate' : 'Minor',
-        urgency:     (p.significance==='W'||p.significance==='E') ? 'Immediate' : 'Expected',
-        sent:        issued  ? issued.toISOString()  : '',
-        expires:     expires ? expires.toISOString() : '',
-        description: p.report || '',
-        instruction: '',
-        phenomena:   p.phenomena,
-        significance:p.significance,
-        wfo:         p.wfo || '',
+        headline:    ev + (wfo ? ' issued by NWS '+wfo : ''),
+        areaDesc:    ugc,
+        severity:    (sig==='W'||sig==='E') ? 'Severe' :
+                     (sig==='A'||sig==='Y') ? 'Moderate' : 'Minor',
+        urgency:     (sig==='W'||sig==='E') ? 'Immediate' : 'Expected',
+        sent:        issued  ? new Date(issued).toISOString()  : '',
+        expires:     expires ? new Date(expires).toISOString() : '',
+        description: p.report || p.description || '',
+        instruction: p.instruction || '',
+        phenomena:   phen,
+        significance:sig,
+        wfo:         wfo,
       };
 
       try{
